@@ -1,5 +1,5 @@
 use crate::{
-    data_types::{Account, DepositOrWithdraw, TransactionEvent, TransactionType},
+    data_types::{Account, TransactionEvent, TransactionFlags, TransactionType},
     transaction_context::TransactionContext,
 };
 use rtrb::Consumer;
@@ -44,23 +44,29 @@ impl<'a> TransactionProcessor<'a> {
 
     fn update_accounts(&mut self, event: TransactionEvent) {
         match event.ty {
-            TransactionType::Deposit => self.context.handle_transaction(
-                event.client_id,
-                event.tx,
-                event.amount,
-                DepositOrWithdraw::Deposit,
-            ),
-            TransactionType::Withdrawal => self.context.handle_transaction(
-                event.client_id,
-                event.tx,
-                event.amount,
-                DepositOrWithdraw::Withdraw,
-            ),
-            TransactionType::Dispute => self.context.handle_dispute(event.client_id, event.tx),
-            TransactionType::Resolve => self.context.handle_resolve(event.client_id, event.tx),
-            TransactionType::Chargeback => {
-                self.context.handle_chargeback(event.client_id, event.tx)
+            TransactionType::Deposit => {
+                self.context
+                    .handle_transaction(&event, Account::deposit, true)
             }
+            TransactionType::Withdrawal => {
+                self.context
+                    .handle_transaction(&event, Account::withdraw, false)
+            }
+            TransactionType::Dispute => self.context.handle_dispute(
+                &event,
+                (TransactionFlags::None, TransactionFlags::Disputed),
+                Account::dispute,
+            ),
+            TransactionType::Resolve => self.context.handle_dispute(
+                &event,
+                (TransactionFlags::Disputed, TransactionFlags::Resolved),
+                Account::resolve,
+            ),
+            TransactionType::Chargeback => self.context.handle_dispute(
+                &event,
+                (TransactionFlags::Disputed, TransactionFlags::Chargeback),
+                Account::chargeback,
+            ),
         }
     }
 }

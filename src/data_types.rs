@@ -109,6 +109,7 @@ pub enum TransactionError {
     InvalidDispute,
     InsufficientFunds,
     Locked,
+    ClientMismatch,
 }
 
 #[derive(Default, Debug, Clone, Copy)]
@@ -146,15 +147,23 @@ impl Account {
         Ok(())
     }
 
+    pub fn dispute(&mut self, amount: Price) {
+        self.held.try_add(amount);
+    }
+
+    pub fn resolve(&mut self, amount: Price) {
+        self.held.try_sub(amount);
+    }
+
+    pub fn chargeback(&mut self, amount: Price) {
+        self.held.try_sub(amount);
+        self.total.try_sub(amount);
+        self.locked = true;
+    }
+
     #[inline]
     pub fn available(&self) -> Price {
         let scaled = self.total.0 - self.held.0;
         Price(scaled)
     }
-}
-
-#[derive(PartialEq, Debug)]
-pub enum DepositOrWithdraw {
-    Deposit,
-    Withdraw,
 }
