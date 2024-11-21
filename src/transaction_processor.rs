@@ -2,36 +2,40 @@ use crate::{
     data_types::{Account, DepositOrWithdraw, TransactionEvent, TransactionType},
     transaction_context::TransactionContext,
 };
-use crossbeam::channel::Receiver;
+use rtrb::Consumer;
 
 #[derive(Debug)]
 pub struct TransactionProcessor<'a> {
     context: &'a mut TransactionContext,
-    receiver: Receiver<TransactionEvent>,
+    consumer: Consumer<TransactionEvent>,
 }
 
 impl<'a> TransactionProcessor<'a> {
     /// Processes Events until the sources are exhausted.
     /// Returns a Iterator over the processed accounts.
     pub fn exhaust_sources(
-        transaction_receiver: Receiver<TransactionEvent>,
+        consumer: Consumer<TransactionEvent>,
     ) -> impl Iterator<Item = (u16, Account)> {
         let mut context = TransactionContext::default();
-        TransactionProcessor::new(&mut context, transaction_receiver).run();
+        TransactionProcessor::new(&mut context, consumer).run();
 
         context.into_iter_accounts()
     }
 
-    fn new(context: &'a mut TransactionContext, receiver: Receiver<TransactionEvent>) -> Self {
-        TransactionProcessor { context, receiver }
+    fn new(context: &'a mut TransactionContext, consumer: Consumer<TransactionEvent>) -> Self {
+        TransactionProcessor { context, consumer }
     }
 
     fn run(mut self) {
-        while let Ok(mut event) = self.receiver.recv() {
-            // precautionary call to make sure the interface is honored
-            event.amount.make_absolute();
-
-            self.update_accounts(event);
+        loop {
+            if let Ok(mut event) = self.consumer.pop() {
+                // precautionary call to make sure the interface is honored
+                event.amount.make_absolute();
+                self.update_accounts(event);
+            } else if self.consumer.is_abandoned() {
+                // we are done
+                break;
+            }
         }
     }
 

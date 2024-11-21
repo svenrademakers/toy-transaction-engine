@@ -1,11 +1,11 @@
 use crate::data_types::{Account, TransactionEvent};
 use anyhow::bail;
-use crossbeam::channel::Sender;
 use csv::{ReaderBuilder, Writer};
+use rtrb::Producer;
 use std::env;
 
 /// non-blocking task that reads csv data on a seperate thread and sends it over a channel
-pub fn run_csv_source(sender: Sender<TransactionEvent>) -> anyhow::Result<()> {
+pub fn run_csv_source(mut producer: Producer<TransactionEvent>) -> anyhow::Result<()> {
     let Some(file_path) = env::args().nth(1) else {
         bail!("Usage: {} <file_path>", env!("CARGO_PKG_NAME"))
     };
@@ -19,7 +19,7 @@ pub fn run_csv_source(sender: Sender<TransactionEvent>) -> anyhow::Result<()> {
         .name("CSV source".to_string())
         .spawn(move || {
             for transaction in rdr.deserialize().filter_map(|item| item.ok()) {
-                sender.send(transaction).expect("CSV source died");
+                producer.push(transaction).expect("CSV source died");
             }
         })?;
 

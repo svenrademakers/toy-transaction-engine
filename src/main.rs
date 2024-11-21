@@ -1,5 +1,5 @@
-use crossbeam::channel::bounded;
 use csv_source::{run_csv_source, write_accounts_to_csv};
+use rtrb::RingBuffer;
 use transaction_processor::TransactionProcessor;
 
 mod csv_source;
@@ -9,13 +9,13 @@ mod transaction_processor;
 
 fn main() -> anyhow::Result<()> {
     // number is arbitrary guesstimate depending on incoming volume
-    let (sender, receiver) = bounded(1024 * 1024);
+    let (producer, consumer) = RingBuffer::new(1024 * 1024);
 
     // source can be anything that produces [`TransactionEvent`] data.
-    run_csv_source(sender)?;
+    run_csv_source(producer)?;
 
     // run engine
-    let accounts = TransactionProcessor::exhaust_sources(receiver);
+    let accounts = TransactionProcessor::exhaust_sources(consumer);
 
     write_accounts_to_csv(accounts)
 }
