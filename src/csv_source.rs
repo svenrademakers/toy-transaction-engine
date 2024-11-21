@@ -4,7 +4,7 @@ use csv::{ReaderBuilder, Writer};
 use rtrb::Producer;
 use std::env;
 
-/// non-blocking task that reads csv data on a seperate thread and sends it over a channel
+/// non-blocking task that reads csv data on a separate thread and sends it over a channel
 pub fn run_csv_source(mut producer: Producer<TransactionEvent>) -> anyhow::Result<()> {
     let Some(file_path) = env::args().nth(1) else {
         bail!("Usage: {} <file_path>", env!("CARGO_PKG_NAME"))
@@ -12,13 +12,14 @@ pub fn run_csv_source(mut producer: Producer<TransactionEvent>) -> anyhow::Resul
 
     let mut rdr = ReaderBuilder::new()
         .flexible(true)
-        .trim(csv::Trim::Fields)
+        .trim(csv::Trim::All)
         .from_path(file_path)?;
 
     std::thread::Builder::new()
         .name("CSV source".to_string())
         .spawn(move || {
-            for transaction in rdr.deserialize().filter_map(|item| item.ok()) {
+            for res in rdr.deserialize() {
+                let transaction: TransactionEvent = res.expect("hoedan");
                 producer.push(transaction).expect("CSV source died");
             }
         })?;

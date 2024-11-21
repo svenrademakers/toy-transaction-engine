@@ -124,7 +124,7 @@ mod tests {
 
     #[test]
     fn test_deposit() {
-        let mut context = TransactionContext::default();
+        let mut context = TransactionContext::new();
         context.handle_transaction(1, 1, price(100), DepositOrWithdraw::Deposit);
 
         assert_eq!(context.transactions.len(), 1);
@@ -141,7 +141,7 @@ mod tests {
 
     #[test]
     fn test_withdraw() {
-        let mut context = TransactionContext::default();
+        let mut context = TransactionContext::new();
         context.handle_transaction(1, 1, price(100), DepositOrWithdraw::Deposit);
         context.handle_transaction(1, 2, price(50), DepositOrWithdraw::Withdraw);
 
@@ -155,7 +155,7 @@ mod tests {
 
     #[test]
     fn test_dispute() {
-        let mut context = TransactionContext::default();
+        let mut context = TransactionContext::new();
         context.handle_transaction(1, 1, price(100), DepositOrWithdraw::Deposit);
         context.handle_dispute(1, 1);
 
@@ -172,7 +172,7 @@ mod tests {
 
     #[test]
     fn test_resolve() {
-        let mut context = TransactionContext::default();
+        let mut context = TransactionContext::new();
         context.handle_transaction(1, 1, price(100), DepositOrWithdraw::Deposit);
         context.handle_dispute(1, 1);
         context.handle_resolve(1, 1);
@@ -190,7 +190,7 @@ mod tests {
 
     #[test]
     fn test_chargeback() {
-        let mut context = TransactionContext::default();
+        let mut context = TransactionContext::new();
         context.handle_transaction(1, 1, price(100), DepositOrWithdraw::Deposit);
         context.handle_dispute(1, 1);
         context.handle_chargeback(1, 1);
@@ -209,7 +209,7 @@ mod tests {
 
     #[test]
     fn test_duplicate_transaction() {
-        let mut context = TransactionContext::default();
+        let mut context = TransactionContext::new();
         context.handle_transaction(1, 1, price(100), DepositOrWithdraw::Deposit);
         context.handle_transaction(1, 1, price(200), DepositOrWithdraw::Deposit);
 
@@ -222,7 +222,7 @@ mod tests {
 
     #[test]
     fn test_invalid_dispute() {
-        let mut context = TransactionContext::default();
+        let mut context = TransactionContext::new();
         context.handle_dispute(1, 1);
 
         assert_eq!(context.transactions.len(), 0);
@@ -231,7 +231,7 @@ mod tests {
 
     #[test]
     fn test_invalid_resolve() {
-        let mut context = TransactionContext::default();
+        let mut context = TransactionContext::new();
         context.handle_resolve(1, 1);
 
         assert_eq!(context.transactions.len(), 0);
@@ -240,7 +240,7 @@ mod tests {
 
     #[test]
     fn test_invalid_chargeback() {
-        let mut context = TransactionContext::default();
+        let mut context = TransactionContext::new();
         context.handle_chargeback(1, 1);
 
         assert_eq!(context.transactions.len(), 0);

@@ -67,12 +67,14 @@ impl<'de> Deserialize<'de> for Price {
     where
         D: Deserializer<'de>,
     {
-        let float = Option::<f64>::deserialize(deserializer)?.unwrap_or_default();
-        Price::try_from(float).map_err(|_| de::Error::custom("Invalid amount"))
+        let opt_float: Option<f64> = Deserialize::deserialize(deserializer)?;
+        let value = opt_float.unwrap_or_default();
+        Price::try_from(value).map_err(|_| de::Error::custom("Invalid amount"))
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Deserialize)]
+#[serde(rename_all = "lowercase")]
 pub enum TransactionType {
     Deposit,
     Withdrawal,
@@ -81,48 +83,14 @@ pub enum TransactionType {
     Chargeback,
 }
 
-#[derive(Deserialize)]
+#[derive(Debug, Deserialize)]
 pub struct TransactionEvent {
     #[serde(rename = "type")]
     pub ty: TransactionType,
+    #[serde(rename = "client")]
     pub client_id: u16,
     pub tx: u32,
     pub amount: Price,
-}
-
-impl TryFrom<&str> for TransactionType {
-    type Error = String;
-
-    fn try_from(value: &str) -> Result<Self, Self::Error> {
-        match value {
-            "deposit" => Ok(TransactionType::Deposit),
-            "withdrawal" => Ok(TransactionType::Withdrawal),
-            "dispute" => Ok(TransactionType::Dispute),
-            "resolve" => Ok(TransactionType::Resolve),
-            "chargeback" => Ok(TransactionType::Chargeback),
-            _ => Err(format!("Invalid transaction type: {}", value)),
-        }
-    }
-}
-
-impl<'de> Deserialize<'de> for TransactionType {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        let s: &str = Deserialize::deserialize(deserializer)?;
-        TransactionType::try_from(s).map_err(serde::de::Error::custom)
-    }
-}
-
-impl Debug for TransactionEvent {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "Event: [{}] {:?}, client={}, amount={}",
-            self.tx, self.ty, self.client_id, self.amount,
-        )
-    }
 }
 
 #[derive(Debug, PartialEq)]
