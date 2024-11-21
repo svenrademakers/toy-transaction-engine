@@ -16,7 +16,10 @@ impl<'a> TransactionProcessor<'a> {
     pub fn exhaust_sources(
         consumer: Consumer<TransactionEvent>,
     ) -> impl Iterator<Item = (u16, Account)> {
-        let mut context = TransactionContext::default();
+        let mut context = TransactionContext::new();
+
+        // here multiple workers could be started, in this case the context needs to be converted
+        // so it can thread-safe handle interior mutability.
         TransactionProcessor::new(&mut context, consumer).run();
 
         context.into_iter_accounts()
@@ -39,7 +42,6 @@ impl<'a> TransactionProcessor<'a> {
         }
     }
 
-    /// This function executes the core logic of transaction handling.
     fn update_accounts(&mut self, event: TransactionEvent) {
         match event.ty {
             TransactionType::Deposit => self.context.handle_transaction(

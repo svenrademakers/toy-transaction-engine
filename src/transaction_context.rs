@@ -4,13 +4,20 @@ use crate::data_types::{
 use std::collections::{hash_map::Entry, HashMap};
 use tracing::debug;
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct TransactionContext {
     transactions: HashMap<u32, (Price, TransactionFlags)>,
     accounts: HashMap<u16, Account>,
 }
 
 impl TransactionContext {
+    pub fn new() -> Self {
+        TransactionContext {
+            transactions: HashMap::with_capacity(1024 * 1024),
+            accounts: HashMap::with_capacity(1024),
+        }
+    }
+
     pub fn into_iter_accounts(self) -> impl Iterator<Item = (u16, Account)> {
         self.accounts.into_iter()
     }

@@ -62,24 +62,12 @@ impl TryFrom<f64> for Price {
     }
 }
 
-impl PartialEq<f64> for Price {
-    fn eq(&self, other: &f64) -> bool {
-        // this is a bit of a naive implementation because we potentially lose
-        // precision.
-        let Ok(o): Result<Price, _> = (*other).try_into() else {
-            return false;
-        };
-
-        &o == self
-    }
-}
-
 impl<'de> Deserialize<'de> for Price {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
     {
-        let float: f64 = Deserialize::deserialize(deserializer)?;
+        let float = Option::<f64>::deserialize(deserializer)?.unwrap_or_default();
         Price::try_from(float).map_err(|_| de::Error::custom("Invalid amount"))
     }
 }
@@ -95,12 +83,11 @@ pub enum TransactionType {
 
 #[derive(Deserialize)]
 pub struct TransactionEvent {
-    #[serde(default)]
-    pub amount: Price,
-    pub tx: u32,
-    pub client_id: u16,
     #[serde(rename = "type")]
     pub ty: TransactionType,
+    pub client_id: u16,
+    pub tx: u32,
+    pub amount: Price,
 }
 
 impl TryFrom<&str> for TransactionType {
