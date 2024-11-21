@@ -29,7 +29,7 @@ extra checks in favor of execution speed.
 
 i've settled on the following architecture before i started coding:
 
-![alt text](https://github.com/svenrademakers/toy-transaction-engine/blob/master/design.jpg?raw=true)
+![quick design drawing](https://github.com/svenrademakers/toy-transaction-engine/blob/master/design.jpg)
 
 Given the very limited time-frame, only a subset of this design is implemented.
 But scaling was taken into account when designing this application.
