@@ -18,8 +18,8 @@ impl<'a> TransactionProcessor<'a> {
     ) -> impl Iterator<Item = (u16, Account)> {
         let mut context = TransactionContext::new();
 
-        // here multiple workers could be started, in this case the context needs to be converted
-        // so it can thread-safe handle interior mutability.
+        // here multiple workers could be started, in this case the context needs to be made
+        // thread-safe so it will handle interior mutability.
         TransactionProcessor::new(&mut context, consumer).run();
 
         context.into_iter_accounts()

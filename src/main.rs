@@ -14,7 +14,6 @@ fn main() -> anyhow::Result<()> {
     // source can be anything that produces [`TransactionEvent`] data.
     run_csv_source(producer)?;
 
-    // run engine
     let accounts = TransactionProcessor::exhaust_sources(consumer);
 
     write_accounts_to_csv(accounts)

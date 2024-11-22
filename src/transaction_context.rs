@@ -116,13 +116,16 @@ mod tests {
     fn test_withdrawal() {
         let mut context = TransactionContext::new();
 
+        // insufficient funds
+        let withdrawal_event = create_event(TransactionType::Withdrawal, 1, 3, 5.0);
+        context.handle_transaction(&withdrawal_event, Account::withdraw, false);
+
         let deposit_event = create_event(TransactionType::Deposit, 1, 1, 10.0);
         context.handle_transaction(&deposit_event, Account::deposit, true);
 
         let withdrawal_event = create_event(TransactionType::Withdrawal, 1, 2, 5.0);
         context.handle_transaction(&withdrawal_event, Account::withdraw, false);
 
-        // Check the account balance
         let account = context.accounts.get(&1).expect("Account not found");
         assert_eq!(account.available(), 5.0.try_into().unwrap());
         assert_eq!(account.total, 5.0.try_into().unwrap());
@@ -143,7 +146,6 @@ mod tests {
             Account::dispute,
         );
 
-        // Check the account balance
         let account = context.accounts.get(&1).expect("Account not found");
         assert_eq!(account.available(), 0.0.try_into().unwrap());
         assert_eq!(account.held, 10.0.try_into().unwrap());
@@ -171,7 +173,6 @@ mod tests {
             Account::resolve,
         );
 
-        // Check the account balance
         let account = context.accounts.get(&1).expect("Account not found");
         assert_eq!(account.available(), 10.0.try_into().unwrap());
         assert_eq!(account.held, 0.0.try_into().unwrap());
